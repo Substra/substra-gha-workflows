@@ -27,10 +27,11 @@ jobs:
       - name: Set environment variables
         run: |
           set -eu
-          echo 'PUBLISH=${{ inputs.force-publish || github.event_name == 'release' }}' >> $GITHUB_ENV
+          
+          echo 'PUBLISH=${{ inputs.force-publish || (github.event_name == 'release' && !github.event.draft) }}' >> $GITHUB_ENV
         
           LATEST=false
-          if ${{ github.event_name == 'release' }};then
+          if ${{ github.event_name == 'release' && !github.event.prerelease && !github.event.draft }};then
             # find out whether it's the latest release
             LATEST_RELEASE_ID="$(
               curl -L \
