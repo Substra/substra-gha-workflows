@@ -81,6 +81,8 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ${{ env.DOCKERFILE_LOCATION }}
+          # https://github.com/hadolint/hadolint/wiki/DL3018 apk pinning is useless since the Alpine repo removes packages very aggressively
+          ignore: DL3018
 
       - name: Login to registry
         uses: docker/login-action@v2
