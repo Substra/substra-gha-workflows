@@ -189,6 +189,8 @@ jobs:
           version: "v3.12.0"
         id: install
 
+      - run: sudo snap install yq
+
       - name: Add dependencies repo
         run: |
           REPOS_JSON="${{ inputs.helm-repositories }}"
@@ -197,6 +199,17 @@ jobs:
             url=$(echo "$repo" | jq -r '.url')
             helm repo add "$name" "$url"
           done
+
+      - name: Mark chart as prerelease
+        # This avoids the chart being tagged as latest release on artifacthub
+        # see https://artifacthub.io/docs/topics/annotations/helm/
+        run: |
+          CHART_YAML_LOCATION=${{ needs.prepare-charts-path.outputs.charts_path }}/Chart.yaml
+          if [ $(yq '.version | contains("-")' $CHART_YAML_LOCATION) == 'true' ]
+          then
+            yq '.annotations."artifacthub.io/prerelease" = "true"' $CHART_YAML_LOCATION > .Chart.yaml.new
+            mv .Chart.yaml.new $CHART_YAML_LOCATION
+          fi
 
       - name: Package chart
         run: |
@@ -214,7 +227,7 @@ jobs:
 
       - name: Publish chart
         run: |
-          mv ${{ needs.prepare-charts-path.outputs.repository_name }}-$(grep -e "^version" ${{ needs.prepare-charts-path.outputs.charts_path }}/Chart.yaml | cut -c10-).tgz substra-charts/
+          mv ${{ needs.prepare-charts-path.outputs.repository_name }}-$(yq ".version" ${{ needs.prepare-charts-path.outputs.charts_path }}/Chart.yaml).tgz substra-charts/
           cd substra-charts
           helm repo index .
           git add .
