@@ -42,9 +42,6 @@ jobs:
     needs: set-path
     steps:
       - uses: actions/checkout@v4
-        with:
-          repository: ${{ inputs.repository }}
-          ref: "main"
 
       - uses: azure/setup-helm@v3.5
         with:
@@ -58,7 +55,7 @@ jobs:
           ref: "2.5.0"
           path: readme-generator-for-helm
 
-      - name: Install tools
+      - name: Install dependencies
         run: sudo snap install yq && cd readme-generator-for-helm && npm install && cd ..
 
       - name: Helm repo add
@@ -85,11 +82,11 @@ jobs:
             git diff --exit-code $DIR/Chart.lock || (echo "$DIR/Chart.lock needs to be updated!" >&2 && exit 1)
           fi
 
-      - name: Get current chart version
+      - name: Read version
         run: echo CHART_VERSION=$(yq eval .version ${{ needs.set-path.outputs.charts_path }}/Chart.yaml) >> $GITHUB_OUTPUT
         id: get-chart-version
 
-      - name: Check version increment
+      - name: Check version
         run: |
           helm repo add substra https://substra.github.io/charts
 
@@ -98,7 +95,8 @@ jobs:
           if [ "${RES}" == "No results found" ]; then
             echo "Version incremented"
           else
-            echo "Validation failed, you should upgrade the chart version in Chart.yaml"
+            echo "Version ${{ steps.get-chart-version.outputs.CHART_VERSION }} already exists."
+            echo "Make sure to update you chart version in the Chart.yaml file"
             exit 1
           fi
 
@@ -157,16 +155,15 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
+    # Allowing manual workflow_dispatch on main branches as version is always verified
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs:
       - set-path
       - tests
     steps:
       - uses: actions/checkout@v4
-        with:
-          repository: ${{ inputs.repository }}
 
-      - name: Install tools
+      - name: Install dependencies
         run: sudo snap install yq
 
       - uses: azure/setup-helm@v3.5
@@ -183,7 +180,7 @@ jobs:
             helm repo add "$name" "$url"
           done
 
-      - name: Mark chart as prerelease
+      - name: Mark chart as pre-release
         # This avoids the chart being tagged as latest release on artifacthub
         # see https://artifacthub.io/docs/topics/annotations/helm/
         run: |
@@ -192,15 +189,16 @@ jobs:
           then
             yq '.annotations."artifacthub.io/prerelease" = "true"' $CHART_YAML_LOCATION > .Chart.yaml.new
             mv .Chart.yaml.new $CHART_YAML_LOCATION
+            echo "::warning:: $CHART_YAML_LOCATION has been marked as pre-release"
           fi
 
-      - name: Package chart
+      - name: Helm package
         run: |
           CHARTS_PATH=${{ needs.set-path.outputs.charts_path }}
           helm dep build ${CHARTS_PATH}
           helm package ${CHARTS_PATH}
 
-      - name: Clone Substra charts
+      - name: Clone substra/charts
         uses: actions/checkout@v4
         with:
           repository: Substra/charts
