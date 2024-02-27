@@ -79,7 +79,9 @@ jobs:
       - name: Check Chart.lock
         run: |
           DIR=${{ needs.get-path.outputs.charts_path }}
-          git diff --exit-code $DIR/Chart.lock || (echo "$DIR/Chart.lock needs to be updated!" >&2 && exit 1)
+          if [[ -e $DIR/Chart.lock ]]; then
+            git diff --exit-code $DIR/Chart.lock || (echo "$DIR/Chart.lock needs to be updated!" >&2 && exit 1)
+          fi
 
       - name: Get current chart version
         run: echo CHART_VERSION=$(yq eval .version ${{ needs.set-path.outputs.charts_path }}/Chart.yaml) >> $GITHUB_OUTPUT
@@ -133,15 +135,19 @@ jobs:
       - name: Check README
         run: |
           CHARTS_DIR="$PWD/${{needs.get-path.outputs.charts_path}}"
-          readme-generator-for-helm/bin/index.js -r ${CHARTS_DIR}/README.md -v ${CHARTS_DIR}/values.yaml
+          if [[ -e $DIR/README.md ]]; then
           
-          cd ${{inputs.path}}/
-          if [ -z "$(git status --porcelain)" ]; then
-            exit 0
-          else
-            echo "There should be no change generated, please run 'make doc' in ${{inputs.path}}/charts/ to update the chart README.md"
-            git diff
-            exit 1
+            readme-generator-for-helm/bin/index.js -r ${CHARTS_DIR}/README.md -v ${CHARTS_DIR}/values.yaml
+            
+            cd ${{inputs.path}}/
+            if [ -z "$(git status --porcelain)" ]; then
+              exit 0
+            else
+              echo "There should be no change generated, please run 'make doc' in ${{inputs.path}}/charts/ to update the chart README.md"
+              git diff
+              exit 1
+            fi
+          
           fi
 
   publish:
