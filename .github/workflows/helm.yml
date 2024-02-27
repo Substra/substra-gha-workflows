@@ -79,7 +79,9 @@ jobs:
       - name: Check Chart.lock
         run: |
           DIR=${{ needs.get-path.outputs.charts_path }}
-          if [[ -e $DIR/Chart.lock ]]; then
+          if [[ ! -e $DIR/Chart.lock ]]; then
+            echo "::warning:: $DIR/Chart.lock not found"
+          else
             git diff --exit-code $DIR/Chart.lock || (echo "$DIR/Chart.lock needs to be updated!" >&2 && exit 1)
           fi
 
@@ -135,7 +137,9 @@ jobs:
       - name: Check README
         run: |
           CHARTS_DIR="$PWD/${{needs.get-path.outputs.charts_path}}"
-          if [[ -e $DIR/README.md ]]; then
+          if [[ ! -e $DIR/README.md ]]; then
+            echo "::warning:: $DIR/README.md file not found"
+          else
           
             readme-generator-for-helm/bin/index.js -r ${CHARTS_DIR}/README.md -v ${CHARTS_DIR}/values.yaml
             
