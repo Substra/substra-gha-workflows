@@ -134,7 +134,7 @@ jobs:
 
       - name: Check readme
         run: |
-          CHARTS_DIR="$PWD/${{needs.set-path.outputs.charts_path}}"
+          CHARTS_DIR="${{needs.set-path.outputs.charts_path}}"
           if [[ ! -e $DIR/README.md ]]; then
             echo "::warning:: $DIR/README.md file not found"
           else
@@ -151,6 +151,12 @@ jobs:
             fi
           
           fi
+
+      - name: Helm package
+        run: |
+          CHARTS_PATH=${{ needs.set-path.outputs.charts_path }}
+          helm dep build ${CHARTS_PATH}
+          helm package ${CHARTS_PATH}
 
   publish:
     name: Publish
