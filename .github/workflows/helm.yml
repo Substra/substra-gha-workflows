@@ -135,8 +135,8 @@ jobs:
       - name: Check readme
         run: |
           CHARTS_DIR="${{needs.set-path.outputs.charts_path}}"
-          if [[ ! -e $DIR/README.md ]]; then
-            echo "::warning:: $DIR/README.md file not found"
+          if [[ ! -e $CHARTS_DIR/README.md ]]; then
+            echo "::warning:: $CHARTS_DIR/README.md file not found"
           else
           
             readme-generator-for-helm/bin/index.js -r ${CHARTS_DIR}/README.md -v ${CHARTS_DIR}/values.yaml
