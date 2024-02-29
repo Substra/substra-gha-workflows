@@ -90,7 +90,7 @@ jobs:
         run: |
           helm repo add substra https://substra.github.io/charts
 
-          RES=$(helm search repo ${{ inputs.charts-name }} --version ${{ steps.get-chart-version.outputs.CHART_VERSION }})
+          RES=$(helm search repo ${{ needs.set-path.outputs.repository_name }} --version ${{ steps.get-chart-version.outputs.CHART_VERSION }})
 
           if [ "${RES}" == "No results found" ]; then
             echo "Version incremented"
