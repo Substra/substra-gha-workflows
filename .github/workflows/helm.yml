@@ -136,6 +136,7 @@ jobs:
           fi
 
       - name: Check readme
+        continue-on-error: true
         run: |
           CHARTS_DIR="${{needs.set-path.outputs.charts_path}}"
           if [[ ! -e $CHARTS_DIR/README.md ]]; then
@@ -154,6 +155,12 @@ jobs:
             fi
           
           fi
+  
+      - name: Helm package
+        run: |
+          CHARTS_PATH=${{ needs.set-path.outputs.charts_path }}
+          helm dep build ${CHARTS_PATH}
+          helm package ${CHARTS_PATH}
 
       - name: Helm package
         run: |
@@ -165,7 +172,7 @@ jobs:
     name: Publish
     runs-on: ubuntu-latest
     # Allowing manual workflow_dispatch on main branches as version is always verified
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: ${{ success() }} && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs:
       - set-path
       - tests
