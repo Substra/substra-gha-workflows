@@ -145,7 +145,7 @@ jobs:
           
             readme-generator-for-helm/bin/index.js -r ${CHARTS_DIR}/README.md -v ${CHARTS_DIR}/values.yaml
             
-            cd ${{inputs.path}}/
+            cd ${{ needs.set-path.outputs.repository_name }}
             if [ -z "$(git status --porcelain)" ]; then
               exit 0
             else
@@ -155,12 +155,6 @@ jobs:
             fi
           
           fi
-  
-      - name: Helm package
-        run: |
-          CHARTS_PATH=${{ needs.set-path.outputs.charts_path }}
-          helm dep build ${CHARTS_PATH}
-          helm package ${CHARTS_PATH}
 
       - name: Helm package
         run: |
