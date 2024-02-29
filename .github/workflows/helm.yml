@@ -67,11 +67,11 @@ jobs:
             helm repo add "$name" "$url"
           done
 
-      - name: Helm lint
-        run: helm lint ${{ needs.set-path.outputs.charts_path }}
-
       - name: Helm dep update
         run: helm dep update ${{ needs.set-path.outputs.charts_path }}
+
+      - name: Helm lint
+        run: helm lint ${{ needs.set-path.outputs.charts_path }}
 
       - name: Check lockfile
         run: |
