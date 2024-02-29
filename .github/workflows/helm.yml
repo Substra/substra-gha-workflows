@@ -60,7 +60,7 @@ jobs:
 
       - name: Helm repo add
         run: |
-          REPOS_JSON="${{ inputs.helm-repositories }}"
+          REPOS_JSON='${{ inputs.helm-repositories }}'
           echo "$REPOS_JSON" | jq -c '.[]' | while read repo; do
             name=$(echo "$repo" | jq -r '.name')
             url=$(echo "$repo" | jq -r '.url')
