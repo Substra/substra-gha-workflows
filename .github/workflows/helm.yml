@@ -71,9 +71,11 @@ jobs:
         run: helm dep update ${{ needs.set-path.outputs.charts_path }}
 
       - name: Helm lint
+        if: always()
         run: helm lint ${{ needs.set-path.outputs.charts_path }}
 
       - name: Check lockfile
+        if: always()
         run: |
           DIR=${{ needs.set-path.outputs.charts_path }}
           if [[ ! -e $DIR/Chart.lock ]]; then
@@ -83,10 +85,12 @@ jobs:
           fi
 
       - name: Read version
+        if: always()
         run: echo CHART_VERSION=$(yq eval .version ${{ needs.set-path.outputs.charts_path }}/Chart.yaml) >> $GITHUB_OUTPUT
         id: get-chart-version
 
       - name: Check version
+        if: always()
         run: |
           helm repo add substra https://substra.github.io/charts
 
@@ -101,11 +105,13 @@ jobs:
           fi
 
       - name: Check changelog
+        if: always()
         run: |
           VERSION_PATTERN="([0-9]+\.){2}[0-9]+"
           DATE_PATTERN="[0-9]{4}-[0-9]{2}-[0-9]{2}"
           HEADING_PATTERN="## \[${VERSION_PATTERN}\] - ${DATE_PATTERN}"
           CHANGELOG="${{ needs.set-path.outputs.charts_path }}/CHANGELOG.md"
+          
           VERSION=${{ steps.get-chart-version.outputs.CHART_VERSION }}
 
           VERSION_DATE=$(grep -E "${HEADING_PATTERN}" ${CHANGELOG}) 
@@ -131,8 +137,9 @@ jobs:
           else
             echo "The date $VERSION_DATE associated with version $VERSION is not the latest in the ${CHANGELOG}. Latest date is $LATEST_DATE." && exit 1
           fi
-
+          
       - name: Check readme
+        if: always()
         run: |
           CHARTS_DIR="${{needs.set-path.outputs.charts_path}}"
           if [[ ! -e $CHARTS_DIR/README.md ]]; then
@@ -141,7 +148,7 @@ jobs:
           
             readme-generator-for-helm/bin/index.js -r ${CHARTS_DIR}/README.md -v ${CHARTS_DIR}/values.yaml
             
-            cd ${{inputs.path}}/
+            cd ${{ needs.set-path.outputs.repository_name }}
             if [ -z "$(git status --porcelain)" ]; then
               exit 0
             else
@@ -153,6 +160,7 @@ jobs:
           fi
 
       - name: Helm package
+        if: always()
         run: |
           CHARTS_PATH=${{ needs.set-path.outputs.charts_path }}
           helm dep build ${CHARTS_PATH}
