@@ -148,11 +148,11 @@ jobs:
           
             readme-generator-for-helm/bin/index.js -r ${CHARTS_DIR}/README.md -v ${CHARTS_DIR}/values.yaml
             
-            cd ${{ needs.set-path.outputs.repository_name }}
+            cd $CHARTS_DIR
             if [ -z "$(git status --porcelain)" ]; then
               exit 0
             else
-              echo "There should be no change generated, please run 'make doc' in ${{inputs.path}}/charts/ to update the chart README.md"
+              echo "There should be no change generated, please run 'make doc' in $CHARTS_DIR to update the chart README.md"
               git diff
               exit 1
             fi
