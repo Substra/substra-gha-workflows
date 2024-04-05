@@ -100,17 +100,17 @@ jobs:
       - name: Check changelog
         if: always()
         run: |
-          VERSION_PATTERN="([0-9]+\.){2}[0-9]+"
+          VERSION_PATTERN="([0-9]+\.){2}[0-9]+(-.*)?"
           DATE_PATTERN="[0-9]{4}-[0-9]{2}-[0-9]{2}"
           HEADING_PATTERN="## \[${VERSION_PATTERN}\] - ${DATE_PATTERN}"
           CHANGELOG="${{ needs.set-path.outputs.charts_path }}/CHANGELOG.md"
-          
+
           VERSION=${{ steps.get-chart-version.outputs.CHART_VERSION }}
 
-          VERSION_DATE=$(grep -E "${HEADING_PATTERN}" ${CHANGELOG}) 
+          VERSION_DATE=$(grep -E "${HEADING_PATTERN}" ${CHANGELOG})
 
           VERSION_DATE=$(echo "$VERSION_DATE" | grep "${VERSION}" || true)
-          
+
           if [[ -z "$VERSION_DATE" ]]; then
             echo "$CHANGELOG does not contain an entry for version ${VERSION}" && exit 1
           fi
@@ -130,7 +130,7 @@ jobs:
           else
             echo "The date $VERSION_DATE associated with version $VERSION is not the latest in the ${CHANGELOG}. Latest date is $LATEST_DATE." && exit 1
           fi
-          
+
       - name: Check readme
         if: always()
         run: |
@@ -139,10 +139,10 @@ jobs:
             echo "::warning:: $CHARTS_DIR/README.md file not found"
             exit 0
           fi
-          
+
           cd $CHARTS_DIR
           npx https://github.com/bitnami-labs/readme-generator-for-helm/tree/2.5.0 -v values.yaml -r README.md
-          
+
           diff=$(git status --porcelain)
           if [ -z "$diff" ]; then
             exit 0
