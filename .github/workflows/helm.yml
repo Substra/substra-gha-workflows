@@ -235,4 +235,11 @@ jobs:
 
       - name: Publish chart
         run: |
-          echo "Publishing chart"
+          mv ${{ needs.set-path.outputs.repository_name }}-$(yq ".version" ${{ needs.set-path.outputs.charts_path }}/Chart.yaml).tgz substra-charts/
+          cd substra-charts
+          helm repo index .
+          git add .
+          git config --global user.email "gh-actions@github.com"
+          git config --global user.name "GitHub Action"
+          git commit -s --message "GitHub Action: ${{ github.repository }}@${{ github.sha }}"
+          git push --quiet --set-upstream origin main
