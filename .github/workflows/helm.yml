@@ -193,3 +193,5 @@ jobs:
         run: |
           echo "${{inputs.publish-alpha == true}} and ${{github.event_name == 'workflow_dispatch'}}"
           echo "${{github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')}}"
+          echo "${{inputs.publish-alpha}}"
+          echo "${{inputs.publish-alpha}} "
