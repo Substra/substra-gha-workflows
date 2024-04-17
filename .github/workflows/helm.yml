@@ -183,63 +183,13 @@ jobs:
     name: Publish
     runs-on: ubuntu-latest
     # Allowing manual workflow_dispatch on main branches as version is always verified
-    if: (inputs.publish-alpha == true && github.event_name == 'workflow_dispatch') || (github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch'))
     needs:
       - set-path
       - tests
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo snap install yq
-
-      - uses: azure/setup-helm@v3.5
-        with:
-          version: "v3.12.0"
-        id: install
-
-      - name: Helm repo add
+      - name: Test conditions
         run: |
-          REPOS_JSON='${{ inputs.helm-repositories }}'
-          echo "$REPOS_JSON" | jq -c '.[]' | while read repo; do
-            name=$(echo "$repo" | jq -r '.name')
-            url=$(echo "$repo" | jq -r '.url')
-            helm repo add "$name" "$url"
-          done
-
-      - name: Mark chart as pre-release
-        # This avoids the chart being tagged as latest release on artifacthub
-        # see https://artifacthub.io/docs/topics/annotations/helm/
-        run: |
-          CHART_YAML_LOCATION=${{ needs.set-path.outputs.charts_path }}/Chart.yaml
-          if [ $(yq '.version | contains("-")' $CHART_YAML_LOCATION) == 'true' ]
-          then
-            yq '.annotations."artifacthub.io/prerelease" = "true"' $CHART_YAML_LOCATION > .Chart.yaml.new
-            mv .Chart.yaml.new $CHART_YAML_LOCATION
-            echo "::warning:: $CHART_YAML_LOCATION has been marked as pre-release"
-          fi
-
-      - name: Helm package
-        run: |
-          CHARTS_PATH=${{ needs.set-path.outputs.charts_path }}
-          helm dep build ${CHARTS_PATH}
-          helm package ${CHARTS_PATH}
-
-      - name: Clone substra/charts
-        uses: actions/checkout@v4
-        with:
-          repository: Substra/charts
-          ref: "main"
-          token: ${{ secrets.CHARTS_GITHUB_TOKEN }}
-          path: substra-charts
-
-      - name: Publish chart
-        run: |
-          mv ${{ needs.set-path.outputs.repository_name }}-$(yq ".version" ${{ needs.set-path.outputs.charts_path }}/Chart.yaml).tgz substra-charts/
-          cd substra-charts
-          helm repo index .
-          git add .
-          git config --global user.email "gh-actions@github.com"
-          git config --global user.name "GitHub Action"
-          git commit -s --message "GitHub Action: ${{ github.repository }}@${{ github.sha }}"
-          git push --quiet --set-upstream origin main
+          echo inputs.publish-alpha == true && github.event_name == 'workflow_dispatch'=${{inputs.publish-alpha == true && github.event_name == 'workflow_dispatch'}}
+          echo github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')=${{github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')}}
