@@ -17,10 +17,8 @@ on:
         default: ${{ github.repository }}
         required: false
       publish-alpha:
-        description: Publish alpha chart. Chart version must be X.Y.Z-alpha.N.
+        description: Publish alpha chart. Chart version must be X.Y.Z-alpha.N
         type: boolean
-        required: false
-#        default: false
 
 jobs:
   set-path:
@@ -116,7 +114,6 @@ jobs:
             exit 1
           fi
 
-
       - name: Check changelog
         if: ${{ ! inputs.publish-alpha }}
         run: |
@@ -126,6 +123,10 @@ jobs:
           CHANGELOG="${{ needs.set-path.outputs.charts_path }}/CHANGELOG.md"
 
           VERSION=${{ steps.get-chart-version.outputs.CHART_VERSION }}
+          
+          if [[ "${VERSION}" == *-alpha\.* ]]; then
+            exit 0
+          fi
 
           VERSION_DATE=$(grep -E "${HEADING_PATTERN}" ${CHANGELOG})
 
@@ -234,9 +235,8 @@ jobs:
           path: substra-charts
 
       - name: Publish chart
-        if: ${{ inputs.publish-alpha }}
+        if: ${{ ! github.event_name != 'pull_request' }}
         run: |
-          exit 1
           mv ${{ needs.set-path.outputs.repository_name }}-$(yq ".version" ${{ needs.set-path.outputs.charts_path }}/Chart.yaml).tgz substra-charts/
           cd substra-charts
           helm repo index .
