@@ -117,17 +117,16 @@ jobs:
       - name: Check changelog
         if: ${{ ! inputs.publish-alpha }}
         run: |
-          VERSION_PATTERN="([0-9]+\.){2}[0-9]+(-alpha.[0-9][0-9]?)?"
+          VERSION_PATTERN="([0-9]+\.){2}[0-9]+"
           DATE_PATTERN="[0-9]{4}-[0-9]{2}-[0-9]{2}"
           HEADING_PATTERN="## \[${VERSION_PATTERN}\] - ${DATE_PATTERN}"
           CHANGELOG="${{ needs.set-path.outputs.charts_path }}/CHANGELOG.md"
 
           VERSION=${{ steps.get-chart-version.outputs.CHART_VERSION }}
           
-          if [[ "${VERSION}" == *-alpha\.* ]]; then
-            exit 0
-          fi
-
+          # Remove pre-release segment when checking CHANGELOG
+          VERSION="${VERSION%%-*}"
+          
           VERSION_DATE=$(grep -E "${HEADING_PATTERN}" ${CHANGELOG})
 
           VERSION_DATE=$(echo "$VERSION_DATE" | grep "${VERSION}" || true)
@@ -179,6 +178,15 @@ jobs:
           CHARTS_PATH=${{ needs.set-path.outputs.charts_path }}
           helm dep build ${CHARTS_PATH}
           helm package ${CHARTS_PATH}
+      
+      - name: Prevent from merging alpha versions
+        if: ${{ ! inputs.publish-alpha }}
+        run: |
+          VERSION=${{ steps.get-chart-version.outputs.CHART_VERSION }}
+          if [[ "${VERSION}" == *-alpha\.* ]]; then
+            echo "Pre-release alpha version ${VERSION} found while not manually triggered"
+            exit 1
+          fi
 
   publish:
     name: Publish
@@ -235,7 +243,6 @@ jobs:
           path: substra-charts
 
       - name: Publish chart
-        if: ${{ ! github.event_name != 'pull_request' }}
         run: |
           mv ${{ needs.set-path.outputs.repository_name }}-$(yq ".version" ${{ needs.set-path.outputs.charts_path }}/Chart.yaml).tgz substra-charts/
           cd substra-charts
