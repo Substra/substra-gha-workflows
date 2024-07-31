@@ -21,12 +21,12 @@ jobs:
     name: Create changelog with towncrier
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout ${{ github.event.inputs.repo }}
+      - name: Checkout ${{ inputs.repo }}
         uses: actions/checkout@v4
         with:
-          repository: substra/${{ github.event.inputs.repo }}
-          path: ${{ github.event.inputs.repo }}
-          ref: ${{ github.event.inputs.branch }}
+          repository: substra/${{ inputs.repo }}
+          path: ${{ inputs.repo }}
+          ref: ${{ inputs.branch }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -35,12 +35,12 @@ jobs:
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - run: pip install towncrier
       - name: Run towncrier
-        run: cd ${{ github.event.inputs.repo }} && towncrier build --yes --version "${{ github.event.inputs.app_version }}" --date "${{ steps.date.outputs.date }}"
+        run: cd ${{ inputs.repo }} && towncrier build --yes --version "${{ inputs.app_version }}" --date "${{ steps.date.outputs.date }}"
       - name: Commit
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           file_pattern: 'changes/* CHANGELOG.md'
           commit_message: '[auto] update changelog'
           commit_options: '--signoff'
-          branch: ${{ github.event.inputs.branch }}
-          repository: ${{ github.event.inputs.repo }}
+          branch: ${{ inputs.branch }}
+          repository: ${{ inputs.repo }}
