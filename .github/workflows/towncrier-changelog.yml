@@ -1,0 +1,46 @@
+name: Towncrier changelog
+
+on:
+  workflow_call:
+    inputs:
+        app_version:
+            type: string
+            description: 'The version of the app'
+            required: true
+        repo:
+            type: string
+            description: 'The repository to update'
+            required: true
+        branch:
+            type: string
+            description: 'The branch to update'
+            required: true
+
+jobs:
+  create-changelog:
+    name: Create changelog with towncrier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ${{ inputs.repo }}
+        uses: actions/checkout@v4
+        with:
+          repository: substra/${{ inputs.repo }}
+          path: ${{ inputs.repo }}
+          ref: ${{ inputs.branch }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - run: pip install towncrier
+      - name: Run towncrier
+        run: cd ${{ inputs.repo }} && towncrier build --yes --version "${{ inputs.app_version }}" --date "${{ steps.date.outputs.date }}"
+      - name: Commit
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          file_pattern: 'changes/* CHANGELOG.md'
+          commit_message: '[auto] update changelog'
+          commit_options: '--signoff'
+          branch: ${{ inputs.branch }}
+          repository: ${{ inputs.repo }}
