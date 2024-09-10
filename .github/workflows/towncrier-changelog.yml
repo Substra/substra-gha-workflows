@@ -27,6 +27,8 @@ jobs:
           repository: substra/${{ inputs.repo }}
           path: ${{ inputs.repo }}
           ref: ${{ inputs.branch }}
+          # https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#commits-made-by-this-action-do-not-trigger-new-workflow-runs
+          token: ${{ secrets.SUBSTRA_BOT_PK }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
