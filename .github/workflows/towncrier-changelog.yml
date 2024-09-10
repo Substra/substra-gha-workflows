@@ -39,8 +39,11 @@ jobs:
       - name: Commit
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          file_pattern: 'changes/* CHANGELOG.md'
           commit_message: '[auto] update changelog'
-          commit_options: '--signoff'
           branch: ${{ inputs.branch }}
+          commit_options: '--signoff'
+          file_pattern: 'changes/* CHANGELOG.md'
           repository: ${{ inputs.repo }}
+          commit_user_name: "substra-bot[bot]"
+          commit_user_email: "174989+substra-bot[bot]@users.noreply.github.com"
+          commit author: "substra-bot[bot] <174989+substra-bot[bot]@users.noreply.github.com>"
