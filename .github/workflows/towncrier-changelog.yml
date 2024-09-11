@@ -21,6 +21,11 @@ jobs:
     name: Create changelog with towncrier
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.SUBSTRA_BOT_APP_ID }}
+          private-key: ${{ secrets.SUBSTRA_BOT_PK }}
       - name: Checkout ${{ inputs.repo }}
         uses: actions/checkout@v4
         with:
@@ -28,7 +33,7 @@ jobs:
           path: ${{ inputs.repo }}
           ref: ${{ inputs.branch }}
           # https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#commits-made-by-this-action-do-not-trigger-new-workflow-runs
-          token: ${{ secrets.SUBSTRA_BOT_PK }}
+          token: ${{ steps.app-token.outputs.token }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -46,6 +51,3 @@ jobs:
           commit_options: '--signoff'
           file_pattern: 'changes/* CHANGELOG.md'
           repository: ${{ inputs.repo }}
-          commit_user_name: "substra-bot[bot]"
-          commit_user_email: "174989+substra-bot[bot]@users.noreply.github.com"
-          commit author: "substra-bot[bot] <174989+substra-bot[bot]@users.noreply.github.com>"
